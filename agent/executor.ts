@@ -33,6 +33,12 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
                 "err": err,
             }, buf);
         }
+        else if (err.$handle != undefined){
+            send({
+                "event": "exception",
+                "err": err,
+            })
+        }
         throw err;
     }
 
@@ -53,8 +59,7 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
     send({
         "event": "ec",
         "exec_ms": exec_ms,
-        "map": TRACE_BITS.readByteArray(MAP_SIZE),
-    });
+    }, TRACE_BITS.readByteArray(MAP_SIZE));
 
     return null;
 }

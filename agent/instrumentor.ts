@@ -29,7 +29,7 @@ export const start_tracing = (thread_id: ThreadId, target_module: string | Modul
     }();
 
     maps.forEach((m) => {
-        console.log("Found module:", m.name, "0x"+m.base, "size:", m.size);
+        console.log("Found module:", m.name, m.base, "size:", m.size);
     })
     
 
@@ -100,6 +100,9 @@ export const start_tracing = (thread_id: ThreadId, target_module: string | Modul
                 iterator.putPopfx();
         
             }
+
+            do iterator.keep()
+            while ((i = iterator.next()) !== null);
         }
 
         transform = transform_x64;

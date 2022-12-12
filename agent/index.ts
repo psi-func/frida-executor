@@ -8,9 +8,9 @@
 
 import { executor_loop } from "./executor.js";
 
-const TARGET_MODULE = "test_empty";
+const TARGET_MODULE = "test-linux";
 const TARGET_FUNCTION = DebugSymbol.getFunctionByName("target_func");
-const RET_TYPE = "void";
+const RET_TYPE = "int";
 const pointer_type: NativeFunctionArgumentType = "pointer" as const;
 const int_type: NativeFunctionArgumentType = "int" as const;
 

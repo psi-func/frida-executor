@@ -8,12 +8,15 @@ import time
 import signal
 import queue
 
-TARGET = "test_empty"
+TARGET = "test-linux"
 SCRIPT = "agent.js"
+
+output_folder = "frida_out"
+os.makedirs(output_folder, exist_ok=True)
 
 input_queue = queue.Queue(10)
 
-with open(TARGET, 'rb') as f:
+with open("file.bin", 'rb') as f:
     b = f.read()
     input_queue.put(b)
 
@@ -27,16 +30,34 @@ def readable_time(t):
 def get_cur_time(): # ms
     return int(round(time.time() * 1000))
 
-def report_error(message):
-    print (" ============= EXECUTOR ERROR! =============")
-    if "lineNumber" in message and message["lineNumber"] is not None:
-        print ("  line %d: %s" % (message["lineNumber"], message["description"]))
-    else:
-        print ("  %s" % message["description"])
-    if "stack" in message:
-        print ("  JS stacktrace:\n")
-        print (message["stack"])
-    print ("")
+# executor setup
+with open(SCRIPT, 'r') as f:
+    code = f.read()
+
+pid = frida.spawn(TARGET, stdio="pipe")
+session = frida.attach(pid)
+
+script = session.create_script(code, runtime="v8")
+
+def on_message(message, data):    
+    print(message)
+    if message["type"] == "error":
+        report_error(message)
+        print (" >> Killing", pid)
+        os.kill(pid, signal.SIGKILL)
+        print (" >> Press Control-C to exit...") 
+        script.unload()
+        session.detach()
+    
+    msg = message["payload"]
+    if msg['event'] == 'ready':
+        on_ready(msg, data)
+    elif msg['event'] == 'crash':
+        on_crash(msg, data)
+    elif msg['event'] == 'exception':
+        on_exception(msg, data)
+    elif msg['event'] == 'ec':
+        on_ec(msg, data)
 
 def on_ready(message, data):
     global input_queue
@@ -54,30 +75,57 @@ def on_ec(message, data):
     with open("ec.test", 'wb') as f:
         f.write(data)
 
-# executor setup
-with open(SCRIPT, 'r') as f:
-    code = f.read()
+def report_error(message):
+    print (" ============= EXECUTOR ERROR! =============")
+    if "lineNumber" in message and message["lineNumber"] is not None:
+        print ("  line %d: %s" % (message["lineNumber"], message["description"]))
+    else:
+        print ("  %s" % message["description"])
+    if "stack" in message:
+        print ("  JS stacktrace:\n")
+        print (message["stack"])
+    print ("")
 
-pid = frida.spawn(TARGET, stdio="pipe")
-session = frida.attach(pid)
+def on_crash(message, data):
+    global script, session, pid
+    print ("\n"*2 + "  ============= CRASH FOUND! =============")
+    print ("    type:", message["err"]["type"])
+    if "memory" in message["err"]:
+        print ("    %s at:" % message["err"]["memory"]["operation"], message["err"]["memory"]["address"])
+    print ("")
+    t = int(time.time())
+    name = os.path.join(output_folder, "crash_%s_%d" % (message["err"]["type"], t))
+    
+    print (" >> Saving at %s" % repr(name))
+    with open(name, "wb") as f:
+        f.write(data)
+    
+    print (" >> Killing", pid)
+    os.kill(pid, signal.SIGKILL)
+    
+    print (" >> Press Control-C to exit...")
+    script.unload()
+    session.detach()
 
-script = session.create_script(code, runtime="v8")
-
-def on_message(message, data):
-    print(message)
-    if message["type"] == "error":
-        report_error(message)
-        print (" >> Killing", pid)
-        os.kill(pid, signal.SIGKILL)
-        print (" >> Press Control-C to exit...") 
-        script.unload()
-        session.detach()
-    msg = message["payload"]
-    if msg['event'] == 'ready':
-        on_ready(msg, data)
+def on_exception(message, data):
+    global script, session, pid
+    print ("\n"*2 + "  =========== EXCEPTION FOUND! ===========")
+    print ("    message:", message["err"])
+    print ("")
+    t = int(time.time())
+    name = os.path.join(output_folder, "exception_%d" % (t))
+    
+    print (" >> Saving at %s" % repr(name))
+    with open(name, "wb") as f:
+        f.write(data)
+    
+    print (" >> Killing", pid)
+    os.kill(pid, signal.SIGKILL)
+    print (" >> Press Control-C to exit...")
+    script.unload()
+    session.detach()
 
 script.on('message', on_message)
-
 script.load()
 
 # graceful shutdown
