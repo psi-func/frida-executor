@@ -6,11 +6,11 @@
     Copyright 2022 Maksim Shalagin. All rights reserved.
 */
 
-import { TRACE_BITS } from "./bitmap";
-import { MAP_SIZE, MAX_FILE, TIMEOUT } from "./config";
-import { fuzzer_test_one_input, target_module } from "./index";
-import { start_tracing } from "./instrumentor";
-import { hex_to_arrbuf } from "./utils";
+import { TRACE_BITS } from "./bitmap.js";
+import { MAP_SIZE, MAX_FILE, TIMEOUT } from "./config.js";
+import { fuzzer_test_one_input, target_module } from "./index.js";
+import { start_tracing } from "./instrumentor.js";
+import { hex_to_arrbuf } from "./utils.js";
 
 
 const zeroed_bits : number[] = new Array(MAP_SIZE);
@@ -59,7 +59,7 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
     return null;
 }
 
-const executor_loop = () => {
+export const executor_loop = () => {
     let payload : Uint8Array | null = null;
 
     const runner = (arr_buf : ArrayBuffer) => {
@@ -78,7 +78,7 @@ const executor_loop = () => {
         send({
             "event": "crash",
             "err": exception,
-        }, payload ? Array.from(payload) : null);
+        }, payload?.buffer as ArrayBuffer);
 
         // terminate process
         return false;
@@ -91,9 +91,13 @@ const executor_loop = () => {
     // executor cycle
     while (true) {
         // wait for input
+        send({
+            "event": "ready",
+        });
+
         let buf : ArrayBuffer | null = null;
 
-        let op = recv("input", (msg, data) => {
+        let op = recv("input", (msg) => {
             if (msg.buf == null) {
                 buf = null;
                 return;

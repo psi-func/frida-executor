@@ -7,6 +7,6 @@
 */
 
 
-import { MAP_SIZE } from "./config";
+import { MAP_SIZE } from "./config.js";
 
 export let TRACE_BITS = Memory.alloc(MAP_SIZE);

@@ -2,11 +2,11 @@
   "name": "frida-executor",
   "version": "0.1.0",
   "description": "frida agent to get coverage",
-  "main": "agent/index.js",
+  "main": "agent/index.ts",
   "scripts": {
     "prepare": "npm run build",
-    "build": "frida-compile agent/index.js -o agent.js -c",
-    "watch": "frida-compile agent/index.js -o agent.js -w"
+    "build": "frida-compile agent/index.ts -o agent.js -c",
+    "watch": "frida-compile agent/index.ts -o agent.js -w"
   },
   "author": "Maksim Shalagin <shalaginmx998@yandex.ru>",
   "license": "MIT",

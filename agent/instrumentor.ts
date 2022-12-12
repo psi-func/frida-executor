@@ -6,8 +6,8 @@
     Copyright 2022 Maksim Shalagin. All rights reserved.
 */
 
-import { TRACE_BITS } from "./bitmap";
-import { MAP_SIZE } from "./config";
+import { TRACE_BITS } from "./bitmap.js";
+import { MAP_SIZE } from "./config.js";
 
 // trust threshold must be 0
 Stalker.trustThreshold = 0;
@@ -28,6 +28,10 @@ export const start_tracing = (thread_id: ThreadId, target_module: string | Modul
         return maps;
     }();
 
+    maps.forEach((m) => {
+        console.log("Found module:", m.name, "0x"+m.base, "size:", m.size);
+    })
+    
 
     if (target_module !== null) {
         maps.forEach((m) => {
