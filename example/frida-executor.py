@@ -10,8 +10,6 @@ import signal
 TARGET = "test/test-linux"
 SCRIPT = "agent.js"
 
-print(os.getcwd())
-
 output_folder = "frida_out"
 os.makedirs(output_folder, exist_ok=True)
 
@@ -58,9 +56,7 @@ def on_ready(message, data):
     print("")
     
 def on_ec(message, data):
-    
-    with open("ec.test", 'wb') as f:
-        f.write(data)
+    print("  Runtime", message["exec_ms"], "ms")
 
 def report_error(message):
     print (" ============= EXECUTOR ERROR! =============")
@@ -87,12 +83,11 @@ def on_crash(message, data):
     with open(name, "wb") as f:
         f.write(data)
     
-    print (" >> Killing", pid)
-    os.kill(pid, signal.SIGKILL)
-    
-    print (" >> Press Control-C to exit...")
-    script.unload()
-    session.detach()
+    # print (" >> Killing", pid)
+    # os.kill(pid, signal.SIGKILL)
+    # print (" >> Press Control-C to exit...")
+    # script.unload()
+    # session.detach()
 
 def on_exception(message, data):
     global script, session, pid
@@ -106,11 +101,11 @@ def on_exception(message, data):
     with open(name, "wb") as f:
         f.write(data)
     
-    print (" >> Killing", pid)
-    os.kill(pid, signal.SIGKILL)
-    print (" >> Press Control-C to exit...")
-    script.unload()
-    session.detach()
+    # print (" >> Killing", pid)
+    # os.kill(pid, signal.SIGKILL)
+    # print (" >> Press Control-C to exit...")
+    # script.unload()
+    # session.detach()
 
 script.on('message', on_message)
 script.load()
@@ -140,10 +135,12 @@ except (frida.core.RPCException, frida.InvalidOperationError) as e:
     exit(1)
 
 try:
-    script.exports.callExecutorOnce(bytes([0x01, 0x44]).hex())
-    script.exports.callExecutorOnce(bytes([0xfe, 0x44, 0, 0, 0xf0]).hex())
-    script.exports.callExecutorOnce(bytes([0x01, 0x44]).hex())
-except :
+    # map can be null in some weird cases (inside frida), please check
+    map = script.exports.callExecutorOnce(bytes([0x01, 0x45]).hex())
+    map = script.exports.callExecutorOnce(bytes([0xfe, 0x44, 0, 0, 0xf0]).hex())
+    map = script.exports.callExecutorOnce(bytes([0x01, 0x44]).hex())
+except Exception as e:
+    print(e)
     pass
 
 # wait
