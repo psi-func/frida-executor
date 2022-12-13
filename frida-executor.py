@@ -151,8 +151,11 @@ except (frida.core.RPCException, frida.InvalidOperationError) as e:
     except:
         pass
     exit(1)
-    
-script.exports.callExecutorOnce(input_queue.get(block=True).hex())
+
+try:
+    script.exports.callExecutorOnce(input_queue.get(block=True).hex())
+except :
+    pass
 
 # wait
 sys.stdin.read()
