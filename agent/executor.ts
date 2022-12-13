@@ -13,12 +13,12 @@ import { start_tracing } from "./instrumentor.js";
 import { hex_to_arrbuf } from "./utils.js";
 
 
-const zeroed_bits : number[] = new Array(MAP_SIZE);
+const zeroed_bits: number[] = new Array(MAP_SIZE);
 
 const run_coverage = (buf: ArrayBuffer, callback: any) => {
     // cleanup before execute
     TRACE_BITS.writeByteArray(zeroed_bits);
-    
+
     const ts_0 = (new Date()).getTime();
 
     try {
@@ -33,7 +33,7 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
                 "err": err,
             }, buf);
         }
-        else if (err.$handle != undefined){
+        else if (err.$handle != undefined) {
             send({
                 "event": "exception",
                 "err": err,
@@ -50,7 +50,7 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
         // timeout observer
         send({
             "event": "crash",
-            "err": {"type": "timeout"},
+            "err": { "type": "timeout" },
         }, buf);
         throw "timeout";
     }
@@ -65,13 +65,13 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
 }
 
 export const executor_loop = () => {
-    let payload : Uint8Array | null = null;
+    let payload: Uint8Array | null = null;
 
-    const runner = (arr_buf : ArrayBuffer) => {
+    const runner = (arr_buf: ArrayBuffer) => {
 
         if (arr_buf.byteLength > MAX_FILE)
             payload = new Uint8Array(arr_buf.slice(0, MAX_FILE));
-        else 
+        else
             payload = new Uint8Array(arr_buf);
 
         fuzzer_test_one_input(payload);
@@ -90,7 +90,7 @@ export const executor_loop = () => {
     });
 
     start_tracing(Process.getCurrentThreadId(), target_module);
-    
+
     console.log(" >> Setup complete...");
 
     // executor cycle
@@ -100,7 +100,7 @@ export const executor_loop = () => {
             "event": "ready",
         });
 
-        let buf : ArrayBuffer | null = null;
+        let buf: ArrayBuffer | null = null;
 
         let op = recv("input", (msg) => {
             if (msg.buf == null) {
@@ -112,9 +112,58 @@ export const executor_loop = () => {
 
         op.wait();
         // run harness
-        if (buf !== null ) run_coverage(buf, runner);
+        if (buf !== null) run_coverage(buf, runner);
     }
 
 };
 
+let payload: Uint8Array | null = null;
+let init = false;
 
+const runner = (arr_buf: ArrayBuffer) => {
+
+    if (arr_buf.byteLength > MAX_FILE)
+        payload = new Uint8Array(arr_buf.slice(0, MAX_FILE));
+    else
+        payload = new Uint8Array(arr_buf);
+
+    fuzzer_test_one_input(payload);
+};
+
+export const start_executor = () => {
+
+    // set exception handler if crashed
+    Process.setExceptionHandler((exception: ExceptionDetails) => {
+        // send message to client as json
+        send({
+            "event": "crash",
+            "err": exception,
+        }, payload?.buffer as ArrayBuffer);
+
+        // terminate process
+        return false;
+    });
+
+    start_tracing(Process.getCurrentThreadId(), target_module);
+
+    console.log(" >> Setup complete...");
+}
+
+rpc.exports['callexecutorloop'] = function () {
+    executor_loop();
+}
+
+rpc.exports['callexecutorstartup'] = function () {
+    start_executor();
+    init = true;
+}
+
+rpc.exports['callexecutoronce'] = function (input: string) {
+    if (!init) {
+        start_executor();
+        init = true;
+    }
+    let buf = hex_to_arrbuf(input);
+
+    run_coverage(buf, runner);
+} 

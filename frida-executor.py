@@ -143,5 +143,16 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
+try:
+    script.exports.callExecutorStartup()
+except (frida.core.RPCException, frida.InvalidOperationError) as e:
+    try:
+        print(e)
+    except:
+        pass
+    exit(1)
+    
+script.exports.callExecutorOnce(input_queue.get(block=True).hex())
+
 # wait
 sys.stdin.read()

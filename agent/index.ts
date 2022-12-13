@@ -6,7 +6,7 @@
     Copyright 2022 Maksim Shalagin. All rights reserved.
 */
 
-import { executor_loop } from "./executor.js";
+import "./executor.js";
 
 const TARGET_MODULE = "test-linux";
 const TARGET_FUNCTION = DebugSymbol.getFunctionByName("target_func");
@@ -27,5 +27,3 @@ export let fuzzer_test_one_input = function(payload: Uint8Array) {
 }
 
 console.log(" >> Agent loaded!")
-
-executor_loop()
