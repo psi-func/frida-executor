@@ -1,0 +1,4 @@
+frida==16.0.7
+frida-tools==12.0.4
+typing-extensions==4.4.0
+
