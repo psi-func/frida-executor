@@ -9,7 +9,7 @@
 export const hex_to_arrbuf = function(hexstr: string) {
 
     let buf = [];
-    for(var i = 0; i < hexstr.length; i+=2)
+    for(let i = 0; i < hexstr.length; i+=2)
         buf.push(parseInt(hexstr.substring(i, i + 2), 16));
   
     let arr = new Uint8Array(buf).buffer as ArrayBuffer;
