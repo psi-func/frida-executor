@@ -6,19 +6,14 @@ import os
 import sys
 import time
 import signal
-import queue
 
-TARGET = "test-linux"
+TARGET = "test/test-linux"
 SCRIPT = "agent.js"
+
+print(os.getcwd())
 
 output_folder = "frida_out"
 os.makedirs(output_folder, exist_ok=True)
-
-input_queue = queue.Queue(10)
-
-with open("file.bin", 'rb') as f:
-    b = f.read()
-    input_queue.put(b)
 
 def readable_time(t):
     t /= 1000 # ms
@@ -60,14 +55,6 @@ def on_message(message, data):
         on_ec(msg, data)
 
 def on_ready(message, data):
-    global input_queue
-      
-    buf = input_queue.get(block=True)
-    
-    script.post({
-        "type": "input",
-        "buf" : buf.hex()
-    })
     print("")
     
 def on_ec(message, data):
@@ -133,13 +120,13 @@ def signal_handler(sig, frame):
     global pid
     print (" >> Exiting...")
     print (" >> Killing", pid)
-    os.kill(pid, signal.SIGKILL)
     try:
         script.unload()
         session.detach()
+        os.kill(pid, signal.SIGKILL)
     except: 
         pass
-    os._exit (0)
+    os._exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
 
@@ -153,7 +140,9 @@ except (frida.core.RPCException, frida.InvalidOperationError) as e:
     exit(1)
 
 try:
-    script.exports.callExecutorOnce(input_queue.get(block=True).hex())
+    script.exports.callExecutorOnce(bytes([0x01, 0x44]).hex())
+    script.exports.callExecutorOnce(bytes([0xfe, 0x44, 0, 0, 0xf0]).hex())
+    script.exports.callExecutorOnce(bytes([0x01, 0x44]).hex())
 except :
     pass
 
