@@ -36,6 +36,7 @@ Provide target module in executable program, target function to start coverage w
 Compile frida agent script with npm:
 
 ```sh
+npm install
 npm run build # now `agent.js` in root directory 
 ```
 
