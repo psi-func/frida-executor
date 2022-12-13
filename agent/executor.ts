@@ -59,7 +59,7 @@ const run_coverage = (buf: ArrayBuffer, callback: any) => {
     send({
         "event": "ec",
         "exec_ms": exec_ms,
-    }, TRACE_BITS.readByteArray(MAP_SIZE));
+    });
 
     return null;
 }
@@ -117,6 +117,8 @@ export const executor_loop = () => {
 
 };
 
+// RPC and one shot methods
+
 let payload: Uint8Array | null = null;
 let init = false;
 
@@ -165,5 +167,12 @@ rpc.exports['callexecutoronce'] = function (input: string) {
     }
     let buf = hex_to_arrbuf(input);
 
-    run_coverage(buf, runner);
+    try {
+        run_coverage(buf, runner);
+    } catch (error) {
+        // do nothing 
+        console.log(error)  
+    }
+
+    return TRACE_BITS.readByteArray(MAP_SIZE);
 } 

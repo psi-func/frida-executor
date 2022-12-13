@@ -27,27 +27,35 @@ export const start_tracing = (thread_id: ThreadId, target_module: string | Modul
 
         return maps;
     }();
-
-    maps.forEach((m) => {
-        console.log("Found module:", m.name, m.base, "size:", m.size);
-    })
     
 
     if (target_module !== null) {
         maps.forEach((m) => {
+            let msg = ["Found module:", m.name, m.base, "size:", m.size].join(' ');
+
             if (m.name == target_module || m == target_module) {
                 start_addr = m.base;
                 end_addr = m.base.add(m.size);
+                msg += ' included (+)';
             }
             else {
                 Stalker.exclude(m);
+                msg += ' excluded (-)';
             }
+            console.log(msg);
         });
     } else {
         maps.forEach((m) => {
+            let msg = ["Found module:", m.name, m.base, "size:", m.size].join(' ');
+
             if (ignore_libs.some((ignored_libname) => { m.name.startsWith(ignored_libname) })) {
                 Stalker.exclude(m);
+                msg += ' excluded (-)';
             }
+            else {
+                msg += ' included (+)';
+            }
+            console.log(msg);
         });
     }
 
