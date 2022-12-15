@@ -174,5 +174,20 @@ rpc.exports['callexecutoronce'] = function (input: string) {
         console.log(error)  
     }
 
-    return TRACE_BITS.readByteArray(MAP_SIZE);
+    // format output as showmap
+    let edge_coverage = TRACE_BITS.readByteArray(MAP_SIZE);
+    let m = "";
+    if (edge_coverage !== null) {
+        let ec = new Uint8Array(edge_coverage);
+        
+        
+        ec.forEach((hits, idx) => {
+            if (hits !== 0) {
+                m += idx + ':' + hits + ','; 
+            }
+        });
+        
+    }
+
+    return m;
 } 
