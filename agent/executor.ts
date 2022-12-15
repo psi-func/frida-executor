@@ -10,7 +10,7 @@ import { TRACE_BITS } from "./bitmap.js";
 import { MAP_SIZE, MAX_FILE, TIMEOUT } from "./config.js";
 import { fuzzer_test_one_input, target_module } from "./index.js";
 import { start_tracing } from "./instrumentor.js";
-import { hex_to_arrbuf } from "./utils.js";
+import { b64_to_arrbuf, hex_to_arrbuf } from "./utils.js";
 
 
 const zeroed_bits: number[] = new Array(MAP_SIZE);
@@ -160,12 +160,26 @@ rpc.exports['callexecutorstartup'] = function () {
     init = true;
 }
 
-rpc.exports['callexecutoronce'] = function (input: string) {
+
+// encoding 0 <- base64 input
+// encoding 1 <- hex input
+rpc.exports['callexecutoronce'] = function (encoding: number, input: string) {
     if (!init) {
         start_executor();
         init = true;
     }
-    let buf = hex_to_arrbuf(input);
+
+    let buf: ArrayBuffer;
+
+    if (encoding === 0) {
+        buf = b64_to_arrbuf(input);
+    }
+    else if (encoding = 1) {
+        buf = hex_to_arrbuf(input);
+    }
+    else {
+        throw "unexpected encoding type";
+    }
 
     try {
         run_coverage(buf, runner);

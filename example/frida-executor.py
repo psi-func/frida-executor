@@ -2,6 +2,7 @@
 
 import frida
 import base64
+import gzip
 import os
 import sys
 import time
@@ -136,9 +137,9 @@ except (frida.core.RPCException, frida.InvalidOperationError) as e:
 
 try:
     # map can be null in some weird cases (inside frida), please check
-    map = script.exports.callExecutorOnce(bytes([0x01, 0x45]).hex())
-    map = script.exports.callExecutorOnce(bytes([0xfe, 0x44, 0, 0, 0xf0]).hex())
-    map = script.exports.callExecutorOnce(bytes([0x01, 0x44]).hex())
+    map = script.exports.callExecutorOnce(0, base64.b64encode(bytes([0x01, 0x44])).decode("ascii"))
+    map = script.exports.callExecutorOnce(1, bytes([0xfe, 0x44, 0, 0, 0xf0]).hex())
+    map = script.exports.callExecutorOnce(1, bytes([0x01, 0x44]).hex())
 except Exception as e:
     print(e)
     pass
