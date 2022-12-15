@@ -179,8 +179,7 @@ rpc.exports['callexecutoronce'] = function (input: string) {
     let m = "";
     if (edge_coverage !== null) {
         let ec = new Uint8Array(edge_coverage);
-        
-        
+         
         ec.forEach((hits, idx) => {
             if (hits !== 0) {
                 m += idx + ':' + hits + ','; 
@@ -189,5 +188,5 @@ rpc.exports['callexecutoronce'] = function (input: string) {
         
     }
 
-    return m;
+    return m.slice(0, -1);
 } 
